@@ -1,0 +1,38 @@
+<?php
+
+/**
+ * Implements hook_init().
+ */
+ function mautic_api_init() {
+   libraries_load('mautic');
+}
+
+/**
+ * Implements hook_menu().
+ */
+function mautic_api_menu() {
+  $items = array();
+
+  $items['admin/config/system/mautic-api'] = array(
+    'title' => 'Mautic API',
+    'description' => 'Configuration for Mautic API',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('mautic_api_form'),
+    'file' => 'mautic_api.settings.inc',
+    'access arguments' => array('access administration pages'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+/**
+ * This is used to get the required $auth object to make API calls to the Mautic install.
+ * 
+ * @return type
+ */
+function mautic_api_get_auth() {
+  module_load_include('inc', 'mautic_api', '/inc/mautic_api.get_auth');
+  $auth = mautic_api_get_authenticated();
+  return $auth;
+}
