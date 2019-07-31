@@ -16,7 +16,6 @@ function mautic_api_library_libraries_info() {
     /** @var \Drupal\xautoload\Adapter\LocalDirectoryAdapter $adapter */
           // Scan sites/all/libraries/mautic/composer.json to look for
           // autoload information.
-    
           $adapter->composerJson('composer.json');
         },
   );
