@@ -19,8 +19,8 @@ function mautic_api_menu() {
     'title' => 'Mautic API',
     'description' => 'Configuration for Mautic API',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('mautic_api_form'),
-    'file' => 'mautic_api.settings.inc',
+    'page arguments' => array('mautic_api_settings_form'),
+    'file' => 'inc/mautic_api.settings.inc',
     'access arguments' => array('access administration pages'),
     'type' => MENU_NORMAL_ITEM,
   );

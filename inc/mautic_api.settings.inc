@@ -6,7 +6,7 @@
  * @return string
  */
 
-function mautic_api_form() {
+function mautic_api_settings_form() {
   
   $form = array();
 
@@ -37,7 +37,7 @@ function mautic_api_form() {
     '#required' => TRUE,
   );
    
-  // We add an additional submit handler to the settings form
+  // We add an additional submit handler to the stanard settings form
   $settings_form = system_settings_form($form);
   $settings_form['#submit'][] = 'maultic_api_admin_test_connection';
   return $settings_form;
@@ -50,7 +50,15 @@ function mautic_api_form() {
  * @param type $form_state
  */
 function maultic_api_admin_test_connection($form, &$form_state) {
-  $authenticate = mautic_api_get_auth();
+  $auth = mautic_api_get_auth();
   // Temporary dpm() call just to see the data we received upon authentication
-  dpm($authenticate);
+  
+  $response = $auth->_httpResponseInfo['http_code'];
+  if ($response == 200){
+    drupal_set_message(t("We are connected to Mautic!"), 'status');
+  }
+  else {
+    // Log the error
+    drupal_set_message(t("Something did not work properly. Please check your logs!"), 'error');
+  }
 }
