@@ -25,6 +25,7 @@ function mautic_api_get_authenticated () {
     'accessTokenExpires' => variable_get('mautic_api_access_token_expires'),
     'accessTokenRefresh' => variable_get('mautic_api_access_token_refresh'),
   );
+  
   // ApiAuth->newAuth() will accept an array of Auth settings
   $settings = array(
     'clientKey' => variable_get('mautic_api_client_id'),
@@ -61,6 +62,8 @@ function mautic_api_get_authenticated () {
 
       if ($auth->accessTokenUpdated()) {
         $accessTokenData = $auth->getAccessTokenData();
+        
+        // Update / Set Drupal variables for later use.
         variable_set('mautic_api_access_token', $accessTokenData['access_token']);
         variable_set('mautic_api_access_token_expires', $accessTokenData['expires']);
         variable_set('mautic_api_access_token_refresh', $accessTokenData['refresh_token']);
