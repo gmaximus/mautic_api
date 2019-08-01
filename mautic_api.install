@@ -1,0 +1,29 @@
+<?php
+
+/**
+ * Implements hook_install
+ */
+
+function mautic_api_install() {
+  
+  // Add a int field to users to store the users Mautic contact ID
+  $field = array(
+    'field_name' => 'mautic_api_contact_id',
+    'type' => 'number_integer',
+    'cardinality' => 1, // Not required, as is default. Number of values field can hold. 
+  );
+  field_create_field($field);
+
+  $instance = array(
+    'field_name' => 'mautic_api_contact_id',
+    'entity_type' => 'user',
+    'bundle' => 'user',
+    'label' => t('Mautic contact id'),
+    'description' => t('This is the users contact ID in Mautic.'),
+    'widget' => array(
+      'type' => 'number',
+      'weight' => 10,
+    ),
+  );
+  field_create_instance($instance);
+}
