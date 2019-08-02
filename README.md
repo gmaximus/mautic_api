@@ -1,6 +1,8 @@
-This is a Drupal 7 module to provide integration with your Mautic installation. 
+This is a Drupal 7 module to provide integration with your Mautic installation. It is actually contains two modules.
 
-The Mautic API module merely registers the API library. It does nothing other than that inc loading it. 
+## Mautic API Library module 
+
+This merely registers the Mautic API library. It does nothing other than that including loading it. The idea was to save others time that wish to make their own solution.
 
 This requires installing [xAutoload module](https://www.drupal.org/project/xautoload) first.
 
@@ -9,7 +11,13 @@ To install
 ie sites/all/libraries/mautic/lib/MauticApi.php
 2) Turn on module as normal.
 
-The Mautic API module uses the above library to connect to your Mautic installation using OAuth2. 
+## Mautic API module 
+
+** This is a work in progress and not ready to use as is. **
+
+This uses the above library to connect to your Mautic installation using OAuth2. 
+
+It also adds a field to users to store their Mautic contact ID.
 
 To install:
 1) Ensure the above steps are complete.
@@ -17,9 +25,8 @@ To install:
 3) Click save to authorise your website using the info provided.
 
 That's is it at the moment. 
-........
 
-Planned features:
+## What's Next?
 
 Rules integration. 
 - Action to create and/or fetch a contact from Mautic. 
@@ -28,5 +35,5 @@ Rules integration.
   - If not found we will create a new contact. 
   - We will then make all fields available in your Rule.
 - Action to update the contact in Mautic. 
-  - We will be able to use Rules "Set data value" to change whatever we want on the retrieved contact. 
-  - When we're done we can pass the updated contact to this action for the update.
+  - We will be able to use Rules "Set data value" to change whatever we want on the retrieved contact above. 
+  - When we're done we can pass the updated contact to this action to update your Mautic install.
