@@ -1,11 +1,29 @@
 <?php
 
+use Mautic\MauticApi;
+use Mautic\Auth\ApiAuth;
+
 /**
  * Implements hook_init().
  */
 
 function mautic_api_init() {
   libraries_load('mautic');
+}
+
+/**
+ * Implements hook_perm
+ * 
+ */
+
+function mautic_api_perm() {
+  
+  return array(
+    'administer mautic' => array(
+      'title' => t('Administer Mautic API'),
+      'description' => t('View / edit contact ID field on users and adminster settings.'),
+    ),
+  );
 }
 
 /**
@@ -21,7 +39,7 @@ function mautic_api_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('mautic_api_settings_form'),
     'file' => 'inc/mautic_api.settings.inc',
-    'access arguments' => array('access administration pages'),
+    'access arguments' => array('administer mautic'),
     'type' => MENU_NORMAL_ITEM,
   );
 
@@ -29,13 +47,40 @@ function mautic_api_menu() {
 }
 
 /**
+ * Implementation of hook_form_FORMID_alter
+ * @param type $form
+ * @param type $form_state
+ * @param type $form_id
+ */
+function mautic_api_form_user_profile_form_alter (&$form, &$form_state, $form_id) {
+  
+  // Restrict access to the Mautic contact ID field.
+  $form['mautic_api_contact_id']['#access'] = user_access('administer mautic');
+    
+}
+
+/**
  * This is used to get the required $auth object to make API calls to the Mautic install.
  * 
- * @return type
+ * @return $auth
  */
-
 function mautic_api_get_auth() {
   module_load_include('inc', 'mautic_api', '/inc/mautic_api.get_auth');
   $auth = mautic_api_get_authenticated();
   return $auth;
+}
+
+/**
+ * Get Mautic contact fields
+ */
+function mautic_api_get_contact_fields() {
+  $auth = mautic_api_get_auth();
+  $apiurl = variable_get('mautic_api_base_url', '');
+
+  $api = new MauticApi();
+  $contact_api = $api->newApi('contacts', $auth, $apiurl);
+
+  $fields = $contact_api->getFieldList();
+
+  return $fields;
 }
