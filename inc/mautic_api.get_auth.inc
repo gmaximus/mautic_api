@@ -38,7 +38,7 @@ function mautic_api_get_authenticated () {
   // If you already have the access token, et al, pass them in as well to prevent the need for reauthorization
   if (!empty($accessTokenData['accessToken']) && !empty($accessTokenData['accessTokenExpires'])) {
     $settings['accessToken'] = $accessTokenData['accessToken'] ;
-    $settings['accessTokenType'] = $accessTokenData['accessTokenSecret'];
+    $settings['accessTokenType'] = $accessTokenData['accessTokenType'];
     $settings['accessTokenExpires'] = $accessTokenData['accessTokenExpires'];
     $settings['accessTokenRefresh'] = $accessTokenData['accessTokenExpires'];
   }
