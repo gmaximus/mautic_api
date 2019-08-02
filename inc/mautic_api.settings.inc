@@ -53,8 +53,8 @@ function maultic_api_admin_test_connection($form, &$form_state) {
   $auth = mautic_api_get_auth();
   // Temporary dpm() call just to see the data we received upon authentication
   
-  $response = $auth->_httpResponseInfo['http_code'];
-  if ($response == 200){
+  $access_token = variable_get('mautic_api_access_token');
+  if ($access_token){
     drupal_set_message(t("We are connected to Mautic!"), 'status');
   }
   else {
