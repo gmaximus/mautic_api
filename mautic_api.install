@@ -1,29 +1,80 @@
 <?php
 
 /**
+ * Implementation of hook_requirements().
+ */
+function mautic_api_requirements($phase) {
+  $requirements = array();
+  $installed = FALSE;
+  if (class_exists('Mautic\Auth\ApiAuth') && class_exists('Mautic\MauticApi')) {
+    $installed = TRUE;
+  }
+
+  switch ($phase) {
+    case 'runtime':
+      if (!$installed) {
+        $requirements['mautic_api'] = array(
+          'title' => t('Mautic API'),
+          'severity' => REQUIREMENT_ERROR,
+          'value' => t('Library not available'),
+          'description' => t('The Mautic API library is not detected. Consult the README.md for installation instructions.'),
+        );
+      }
+      break;
+  }
+
+  return $requirements;
+}
+
+/**
  * Implements hook_install
  */
 
 function mautic_api_install() {
   
-  // Add a int field to users to store the users Mautic contact ID
-  $field = array(
-    'field_name' => 'mautic_api_contact_id',
-    'type' => 'number_integer',
-    'cardinality' => 1, // Not required, as is default. Number of values field can hold. 
-  );
-  field_create_field($field);
+  // Check if our mautic_id field is present. If not, we will create it.
+  $instance = field_info_instance('user', 'mautic_api_contact_id', 'user');
+  if (!$instance) {
+    $field = array(
+      'field_name' => 'mautic_api_contact_id',
+      'type' => 'number_integer',
+      'cardinality' => 1, // Not required, as is default. Number of values field can hold. 
+    );
+    field_create_field($field);
 
-  $instance = array(
-    'field_name' => 'mautic_api_contact_id',
-    'entity_type' => 'user',
-    'bundle' => 'user',
-    'label' => t('Mautic contact id'),
-    'description' => t('This is the users contact ID in Mautic.'),
-    'widget' => array(
-      'type' => 'number',
-      'weight' => 10,
-    ),
-  );
-  field_create_instance($instance);
+    $instance = array(
+      'field_name' => 'mautic_api_contact_id',
+      'entity_type' => 'user',
+      'bundle' => 'user',
+      'label' => t('Mautic contact id'),
+      'description' => t('This is the users contact ID in Mautic.'),
+      'widget' => array(
+        'type' => 'number',
+        'weight' => 10,
+      ),
+    );
+    field_create_instance($instance);
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+
+function mautic_api_uninstall() {
+  
+  // Delete all our Drupal variables.
+  variable_del('mautic_api_access_token');
+  variable_del('mautic_api_access_token_expires');
+  variable_del('mautic_api_access_token_refresh');
+  variable_del('mautic_api_access_token_type');
+  variable_del('mautic_api_base_url');
+  variable_del('mautic_api_client_id');
+  variable_del('mautic_api_client_secret');
+  
+  // Delete our Mautic ID field on users
+  $instance = field_info_instance('user', 'mautic_api_contact_id', 'user');
+  if ($instance) {
+    field_delete_instance($instance);
+  }
 }
