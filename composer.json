@@ -1,0 +1,17 @@
+{
+    "name": "drupal/mautic_api",
+    "type": "drupal-module",
+    "description": "Integration between Drupal and Mautic",
+    "keywords": ["mautic", "drupal"],
+    "homepage": "https://github.com/gmaximus/mautic_api",
+    "license": "GPL-2.0+",
+    "authors": [
+        {
+            "name": "See contributors",
+            "homepage": "https://github.com/gmaximus/mautic_api"
+        }
+    ],
+    "require": {
+        "mautic/api-library": "2.15.1-beta"
+    }
+}

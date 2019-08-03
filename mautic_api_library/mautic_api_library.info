@@ -1,7 +1,0 @@
-name = Mautic API Library
-description = This module simply loads the Mautic library into Drupal. It does nothing else by itself.
-package = Mautic
-version = 7.x-1.0
-core = 7.x
-dependencies[] = libraries
-dependencies[] = xautoload (>= 7.x-5.0)
