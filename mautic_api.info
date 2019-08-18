@@ -3,7 +3,10 @@ description = This module connects Drupal to Mautic. Adding tracking info, Rules
 package = Mautic
 version = 7.x-1.0
 core = 7.x
+
 dependencies[] = jquery_update
 dependencies[] = rules
 dependencies[] = composer_manager
+dependencies[] = email
+
 configure = admin/config/system/mautic-api

@@ -1,17 +1,27 @@
 <?php
-
+   
 /**
- * Implements hook_perm().
+ * Implements hook_permission().
  */
 
-function mautic_api_perm() {
+function mautic_api_permission() {
   
   return array(
     'administer mautic' => array(
       'title' => t('Administer Mautic API'),
       'description' => t('View / edit contact ID field on users and adminster settings.'),
     ),
+    'view any mautic contact entity' => array(
+      'title' => t('View any Mautic Contact entity'),
+    ),
+    'edit any mautic contact entity' => array(
+      'title' => t('Edit any Mautic Contact entity'),
+    ),
+    'administer mautic contact entities' => array(
+      'title' => t('Administer Mautic Contact entities'),
+    )
   );
+  
 }
 
 /**
@@ -20,8 +30,27 @@ function mautic_api_perm() {
 
 function mautic_api_menu() {
   $items = array();
-
-  $items['admin/config/system/mautic-api'] = array(
+  
+  // We override this page with Views
+  $items['admin/structure/mautic-contact/contacts'] = array(
+    'title' => 'Mautic Contacts',
+    'page callback' => 'mautic_contact_info_page',
+    'access arguments' => array('view any mautic contact entity'),
+  );
+  
+  // The page to view our Mautic Contact entities - needs to follow what
+  // is defined in basic_uri and will use load_basic to retrieve
+  // the necessary entity info.
+  $items['admin/structure/mautic-contact/contacts/%'] = array(
+    'title callback' => 'mautic_api_contact_title',
+    'title arguments' => array(4),
+    'page callback' => 'mautic_api_contact_view',
+    'page arguments' => array(4),
+    'access arguments' => array('view any mautic contact entity'),
+  );
+  
+  // Settings form to cofigure the API credentials etc
+  $items['admin/config/services/mautic-api'] = array(
     'title' => 'Mautic API',
     'description' => 'Configuration for Mautic API',
     'page callback' => 'drupal_get_form',
@@ -40,11 +69,249 @@ function mautic_api_menu() {
  * @param type $form_state
  * @param type $form_id
  */
-function mautic_api_form_user_profile_form_alter (&$form, &$form_state, $form_id) {
+function mautic_api_form_user_profile_form_alter(&$form, &$form_state, $form_id) {
   
   // Restrict access to the Mautic contact ID field.
   $form['mautic_api_contact_id']['#access'] = user_access('administer mautic');
     
+}
+
+/**
+ * Implements hook_entity_info().
+ * 
+ * We define a new entity type called mautic_api_contact. We will use this to store info from Mautic.
+ */
+function mautic_api_entity_info() {
+  
+  $info['mautic_api_contact'] = array(
+    // A human readable label to identify our entity.
+    'label' => t('Mautic contact'),
+    // The controller for our Entity, extending the Drupal core controller.
+    'entity class' => 'MauticApiContactEntity',
+    'controller class' => 'MauticApiContactEntityController',
+    'views controller class' => 'EntityDefaultViewsController',   
+
+    // The table for this entity defined in hook_schema()
+    'base table' => 'mautic_api_contacts',
+
+    'uri callback' => 'entity_class_uri',
+    'module' => 'mautic_api',
+    'access callback' => 'mautic_contact_access_callback',
+    'admin ui' => array(
+      'path' => 'admin/structure/mautic-contact',
+      'controller class' => 'EntityDefaultUIController',
+    ),
+    // IF fieldable == FALSE, we can't attach fields.
+    'fieldable' => TRUE,
+    'bundles' => array(
+      'mautic_api_contact' => array(
+        'label' => t('Mautic Contact'),
+        'admin' => array(
+          'path' => 'admin/structure/mautic-contact',
+        ),
+      ),
+    ),
+
+    // entity_keys tells the controller what database fields are used for key
+    // functions. It is not required if we don't have bundles or revisions.
+    // Here we do not support a revision, so that entity key is omitted.
+    'entity keys' => array(
+      // The 'id' is the unique id.
+      'id' => 'id',
+      'created' => 'created',
+    ),
+
+    // FALSE disables caching. Caching functionality is handled by Drupal core.
+    'static cache' => TRUE,
+  );
+
+  return $info;
+}
+
+/**
+ * Implements hook_entity_property_info().
+ */
+function mautic_api_entity_property_info() {
+  
+  $info = array();
+  
+  $info['mautic_api_contact']['properties']['id'] = array(
+    'label' => t('Mautic Contact Entity ID'),
+    'description' => t('Mautic Contact Entity ID in Drupal.'),
+    'type' => 'integer',
+    'schema field' => 'id',
+  );
+   $info['mautic_api_contact']['properties']['created'] = array(
+    'label' => t('Created'),
+    'description' => t('Date this Mautic Contact was created.'),
+    'type' => 'date',
+    'schema field' => 'created',
+  );
+  
+  return $info;
+  
+}
+  
+/**
+ * Implements the uri callback.
+ */
+function mautic_api_contact_basic_uri($contact) {
+  return array(
+    'path' => 'admin/structure/mautic-contact/' . $contact->id,
+  );
+}
+
+/**
+ * Page callback to see a list of Mautic Contacts.
+ * We override this with a view..
+ */
+function mautic_contact_info_page() {
+  $content['preface'] = array(
+    '#type' => 'item',
+    '#markup' => t('The Mautic API module provides Mautic Contact entity.'),
+  );
+  if (user_access('administer mautic contact entities')) {
+    $content['preface']['#markup'] = t('You can administer these and add fields and change the view !link.',
+      array('!link' => l(t('here'), 'admin/structure/mautic-contact/manage'))
+    );
+  }
+  
+  $content['table'] = mautic_contact_list_entities();
+
+  return $content;
+}
+
+/**
+ * This is just a place holder really. We'll override it with Views.
+ *
+ */
+function mautic_contact_list_entities() {
+  $content = array();
+
+  $content[] = array(
+    '#type' => 'item',
+    '#markup' => t('This page should be overriddon by a view that comes with the module??.'),
+  );
+  
+  return $content;
+}
+
+/**
+ * Form function to create an mautic_api_contact entity.
+ */
+function mautic_api_contact_form($form, &$form_state, $entity = NULL) {
+  
+  $form['created'] = array(
+    '#title' => t('Creation date'),
+    '#type' => 'textfield',
+    '#default_value' => isset($entity->created) ? $entity->created : time(),
+    '#required' => TRUE,
+  );  
+  
+  field_attach_form('mautic_api_contact', $entity, $form, $form_state);
+  
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+    '#weight' => 100,
+  );
+  $form['delete'] = array(
+    '#type' => 'submit',
+    '#value' => t('Delete'),
+    '#submit' => array('mautic_api_contact_edit_delete'),
+    '#weight' => 200,
+  );
+
+  return $form;
+}
+
+/**
+ * Form submit handler: Submits mautic_api_contact_form information.
+ */
+function mautic_api_contact_form_submit($form, &$form_state) {
+  $contact = entity_ui_form_submit_build_entity($form, $form_state);
+  $contact->save();
+  drupal_set_message(t('Mautic Contact @id has been saved.', array('@id' => $contact->id)));
+  $form_state['redirect'] = 'admin/structure/mautic-contact';
+}
+
+/**
+ * Menu callback to display an mautic_api_contact entity.
+ */
+function mautic_api_contact_view($id) {
+  $contacts = entity_load('mautic_api_contact', array($id));
+  $contact = $contacts[$id];
+  $title = 'Mautic Contact ID ' . $contact->id;
+  drupal_set_title($title);
+  $output = entity_view('mautic_api_contact', array($contact));
+  
+  return $output;
+}
+
+/**
+ * Callback for a page title when this entity is displayed.
+ */
+function mautic_api_contact_title($contact_id) {
+  return t('Mautic Contact (item_description=@item_description)', array('@item_description' => $contact_id));
+}
+
+/**
+ * Extending the EntityAPIController for the Mautic API Contact entity.
+ */
+class MauticApiContactEntityController extends EntityAPIController {
+  
+  public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
+
+    $build = parent::buildContent($entity, $view_mode, $langcode, $content);
+    $build['created'] = array(
+      '#type' => 'markup',
+      '#markup' => date('d F, Y', check_plain($entity->created)),
+      '#prefix' => '<p>Created: ',
+      '#suffix' => '</p>',
+    );
+    return $build;
+  
+  } 
+}
+  
+/**
+ * Project entity class extending the Entity class
+ */
+class MauticApiContactEntity extends Entity {
+  
+  protected function defaultUri() {
+    return array('path' => 'admin/structure/mautic-contact/contacts/' . $this->identifier());
+  }
+  
+}
+
+/**
+ * Access callback
+ * @return boolean
+ */
+function mautic_contact_access_callback(){
+  if (user_access('edit any mautic contact entity')) {
+    return TRUE;
+  } 
+  else {
+    return FALSE;
+  }
+}
+
+/**
+ * Convert Drupal list options from form into Mautic "Select - Multiple" value
+ * @param type $list
+ * @return type
+ */
+function mautic_api_convert_list_values_to_mautic($list) {
+  
+  $value = '';
+  foreach ($list as $list_item) {
+    $list_value = $list_item['value'];
+    $value .= '|' . $list_value;
+  }
+  $mautic_value = substr($value, 1);
+  return $mautic_value;
 }
 
 /**
@@ -54,17 +321,72 @@ function mautic_api_form_user_profile_form_alter (&$form, &$form_state, $form_id
  * @return $auth
  */
 function mautic_api_get_auth() {
-  module_load_include('inc', 'mautic_api', '/inc/mautic_api.get_auth');
-  $auth = mautic_api_get_authenticated();
-  return $auth;
+  
+  // Include the file that contains the functions to sign in
+   module_load_include('inc', 'mautic_api', '/inc/mautic_api.get_auth');
+  
+  // Check what Auth type to use
+    $auth_type = variable_get('mautic_api_auth_type', '');
+  
+  // Call appropriate functions to get the $auth object to use.
+    if ($auth_type = 'basic_auth') {
+     $auth = mautic_api_get_authenticated_basic();
+    } 
+    elseif ($auth_type = 'oauth2') {
+      $auth = mautic_api_get_authenticated_oauth2();
+    }
+    
+    return $auth;
 }
 
 /**
  * Get Mautic contact fields.
- * @return $fields
  */
-function mautic_api_get_contact_fields() {
-  module_load_include('inc', 'mautic_api', '/inc/mautic_api.get_contact_fields');
-  $fields = mautic_api_get_field_list();
+function mautic_api_get_contact_field_list() {
+  module_load_include('inc', 'mautic_api', '/inc/mautic_api.calls');
+  $fields = mautic_api_get_field_list_call();
   return $fields;
+}
+
+/**
+ * Get Mautic contact field info. We pass it a Mautic field id.
+ */
+function mautic_api_get_contact_field_info($mautic_id) {
+  module_load_include('inc', 'mautic_api', '/inc/mautic_api.calls');
+  $field = mautic_api_get_contact_field_info_call($mautic_id);
+  return $field;
+}
+
+/**
+ * Look up contact via email. 
+ * Technically could be any string but it's limited one result. So only useful for unique values
+ * @param type $email
+ * @return type $contact
+ */
+function mautic_api_get_contact($email) {
+  module_load_include('inc', 'mautic_api', '/inc/mautic_api.calls');
+  $contact = mautic_api_get_contact_call($email);
+  return $contact;
+}
+
+/**
+ * 
+ * @param type $data
+ * @return type $contact
+ */
+function mautic_api_create_contact($data) {
+  module_load_include('inc', 'mautic_api', '/inc/mautic_api.calls');
+  $contact = mautic_api_create_contact_call($data);
+  return $contact;
+}
+
+/**
+ * 
+ * @param type $data
+ * @return type $contact
+ */
+function mautic_api_edit_contact($id, $data) {
+  module_load_include('inc', 'mautic_api', '/inc/mautic_api.calls');
+  $contact = mautic_api_edit_contact_call($id, $data);
+  return $contact;
 }

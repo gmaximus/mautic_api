@@ -15,7 +15,7 @@ use Mautic\Auth\ApiAuth;
  * @return type
  */
 
-function mautic_api_get_authenticated () {
+function mautic_api_get_authenticated_oauth2() {
   
   global $base_url;
   $mautic_base_url = variable_get('mautic_api_base_url');
@@ -30,7 +30,7 @@ function mautic_api_get_authenticated () {
   $settings = array(
     'clientKey' => variable_get('mautic_api_client_id'),
     'clientSecret' => variable_get('mautic_api_client_secret'),
-    'callback' => $base_url . '/admin/config/system/mautic-api', // @todo Change this to your app callback. It should be the same as you entered when you were creating Mautic API credentials.
+    'callback' => $base_url . '/admin/config/services/mautic-api', // @todo Change this to your app callback. It should be the same as you entered when you were creating Mautic API credentials.
     'version' => 'OAuth2',
     'baseUrl' => $mautic_base_url,
   );
@@ -40,7 +40,7 @@ function mautic_api_get_authenticated () {
     $settings['accessToken'] = $accessTokenData['accessToken'] ;
     $settings['accessTokenType'] = $accessTokenData['accessTokenType'];
     $settings['accessTokenExpires'] = $accessTokenData['accessTokenExpires'];
-    $settings['accessTokenRefresh'] = $accessTokenData['accessTokenExpires'];
+    $settings['accessTokenRefresh'] = $accessTokenData['accessTokenRefresh'];
   }
 
   // Initiate the auth object
@@ -71,12 +71,34 @@ function mautic_api_get_authenticated () {
       }
     }
   } catch (Exception $e) {
-    // Do Error handling
-    $message = "There was the following error returned when trying to authenticate:<pre>";
-    $message .= $e;
-    $message .= "</pre>";
-    watchdog('mautic_api', $message);
-  }
+    // Do error handling
+      $response_headers = $auth->getResponseHeaders();
+      $header = $auth->getResponseInfo();
+      $message = 'There was the following error returned when trying to authenticate:<pre>';
+      $message .= $header . '<br><br>';
+      $message .= $response_headers;
+      $message .= '</pre>';
+      watchdog('mautic_api', $message);
+    }
 
   return $auth;
+}
+
+function mautic_api_get_authenticated_basic() {
+  global $base_url;
+  $mautic_base_url = variable_get('mautic_api_base_url');
+  
+    $settings = array(
+      'userName' => variable_get('mautic_api_user_name'),      
+      'password' => variable_get('mautic_api_password'),
+      'baseUrl' => $mautic_base_url,
+      'callback' => $base_url . '/admin/config/services/mautic-api', 
+    );
+
+  // Initiate the auth object specifying to use BasicAuth
+    $initAuth = new ApiAuth();
+    $auth = $initAuth->newAuth($settings, 'BasicAuth');
+    
+  // Return the $auth object
+    return $auth;
 }
