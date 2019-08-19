@@ -97,11 +97,14 @@ function mautic_api_create_contact_call($data) {
    $owner_user_id = variable_get('mautic_api_user_id', '');
    $data['owner'] = intval($owner_user_id);
    
+  // Set the last active for contact as now. 
+   $data['lastActive'] = date('Y-m-d H:m:i');
   // Make the call
    $api_url = variable_get('mautic_api_base_url') . '/';
    $api = new MauticApi();
    $contact_api = $api->newApi('contacts', $auth, $api_url); 
    $contact = $contact_api->create($data);
+   return $contact;
 }
 
 /**
@@ -119,7 +122,7 @@ function mautic_api_create_contact_call($data) {
  * @param type 
  */
 function mautic_api_edit_contact_call($id, $data) {
-  
+
   // Set some local variables
     $create_if_not_found = FALSE;
   
@@ -136,5 +139,6 @@ function mautic_api_edit_contact_call($id, $data) {
     $api_url = variable_get('mautic_api_base_url') . '/';
     $api = new MauticApi();
     $contact_api = $api->newApi('contacts', $auth, $api_url); 
-    $contact = $contact_api->edit($contact_id, $data, $create_if_not_found);
+    $contact_api->edit($contact_id, $data, $create_if_not_found);
+    
 }
