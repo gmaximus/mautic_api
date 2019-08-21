@@ -67,6 +67,14 @@ function mautic_api_settings_form() {
     '#required' => TRUE,
   );
   
+  
+  $form['mautic_api_oauth2_fieldset']['test_connention'] = array(
+    '#type' => 'submit',
+    '#value' => t('Authorise App'),
+    '#submit' => array('maultic_api_admin_test_connection'),
+    '#weight' => 200,
+  );
+  
   $form['mautic_api_basic_fieldset'] = array(
     '#type' => 'fieldset',
     '#title' => t('BasicAuth Information.'),
@@ -93,13 +101,6 @@ function mautic_api_settings_form() {
     '#size' => 70,
     '#description' => t("Your Mautic password"),
     '#required' => TRUE,
-  );
-  
-  $form['actions']['test_connention'] = array(
-    '#type' => 'submit',
-    '#value' => t('Test connection'),
-    '#submit' => array('maultic_api_admin_test_connection'),
-    '#weight' => 200,
   );
   
   $form['actions']['sync_fields'] = array(
