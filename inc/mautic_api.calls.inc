@@ -107,6 +107,57 @@ function mautic_api_create_contact_call($data) {
    return $contact;
 }
 
+function mautic_api_get_contact_by_id_call($mautic_contact_id) {
+  // Get the $auth object to make the call.
+   $auth = mautic_api_get_auth();
+   
+  // Make the call
+   $api_url = variable_get('mautic_api_base_url') . '/';
+   $api = new MauticApi();
+   $contact_api = $api->newApi('contacts', $auth, $api_url); 
+   $retrieved_contact = $contact_api->get($mautic_contact_id);
+   $contact = $retrieved_contact['contact'];
+   
+  // Return the Mautic contact
+   return $contact;
+}
+
+function mautic_api_fetch_mautic_contact_call($user) {
+  
+  // Set some local variables
+    $email = $user->mail;
+    
+  // Check if we already have a Contact ID for the user.
+    $mautic_id = $user->mautic_api_contact_id;
+    if (empty($mautic_id)) {
+     // Check if a contact already exists in Mautic 
+      $mautic_contact = mautic_api_get_contact($email);
+      if (!$mautic_contact) { // If not we create the contact
+        $new_contact_data = array(
+         'email' => $email,
+         'ipAddress' => ip_address(), // Drupal core function.
+        );
+        $new_contact = mautic_api_create_contact($new_contact_data);
+        $mautic_contact = $new_contact['contact'];
+        $mautic_contact_id = $mautic_contact['id'];
+      } else {
+        $mautic_contact_id = $mautic_contact['id'];
+      }
+      // Save the Mautic Contact ID on the user
+        $user_update = array();
+        $user_update['mautic_api_contact_id'][LANGUAGE_NONE][0]['value'] = $mautic_contact_id;
+        user_save($user, $user_update);
+    }
+    else {
+      // Retrieve the contact when we already have the ID
+       $mautic_contact_id = $user->mautic_api_contact_id['und'][0]['value'];
+       $mautic_contact = mautic_api_get_contact_by_id($mautic_contact_id);
+    }
+    
+    // Return the Mautic Contact
+      return $mautic_contact;
+}
+
 /**
  * This will edit a exiting contact in Mautic. Pass it the Mautic Contact ID and $data array.
  * 

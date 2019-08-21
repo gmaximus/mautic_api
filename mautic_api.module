@@ -381,12 +381,34 @@ function mautic_api_create_contact($data) {
 }
 
 /**
- * 
+ * Edit a Mautic contact
  * @param type $data
  * @return type $contact
  */
 function mautic_api_edit_contact($id, $data) {
   module_load_include('inc', 'mautic_api', '/inc/mautic_api.calls');
   $contact = mautic_api_edit_contact_call($id, $data);
+  return $contact;
+}
+
+/**
+ * This retrieves a contact object from Mautic.
+ * 1) We check if we already have a ID for the user and load it that way.
+ * 2) If there is no ID we look them up by email. 
+ * 3) If that doesn't exist we create a new contact
+ * 4) Lastly return the $contact array from Mautic.
+ * 
+ * @param type $user
+ * @return type $contact
+ */
+function mautic_api_fetch_mautic_contact($user) {
+  module_load_include('inc', 'mautic_api', '/inc/mautic_api.calls');
+  $contact = mautic_api_fetch_mautic_contact_call($user);
+  return $contact;
+}
+
+function mautic_api_get_contact_by_id($mautic_contact_id) {
+  module_load_include('inc', 'mautic_api', '/inc/mautic_api.calls');
+  $contact = mautic_api_get_contact_by_id_call($mautic_contact_id);
   return $contact;
 }
