@@ -1,18 +1,28 @@
-# Mautic API module 
+# Mautic API - Drupal 7 module 
+
+## Overview
 
 **This is a work in progress.**
 
 This module integrates Drupal 7 websites with a Mautic install. It leverages the [Mautic API Library](https://github.com/mautic/api-library) to achieve this.
 
-The Drupal [Composer Manager](https://github.com/mautic/api-library) module is required to load their library into Drupal and install dependencies. That module of course requires the use of [Composer](https://getcomposer.org) itself.
+The Drupal [Composer Manager](https://www.drupal.org/project/composer_manager) module is required to load their library into Drupal and install dependencies. That module of course requires the use of [Composer](https://getcomposer.org) itself.
 
 It also adds a field to users to store their Mautic contact ID.
 
-The whole idea for this module is to leverage rules. Give a new action a user and have that action provide a mautic_api_contact entity. We then do whatever we want with it. Then have a second action that we provide the mautic_api_contact and it will post it back to Mautic.
+The whole idea for this module is to leverage rules. Give a new Rules action a user entity and have that action provide a mautic_api_contact entity. We then do whatever we want with it. Then have a second action that we provide the mautic_api_contact and it will post it back to Mautic.
 
-My use case is a Commerce site with affiliates. So my hope is to have fields in Mautic such as total spent or total earned. So if this module already existed that would become pretty trivial.
+My use case is a Commerce site with product contributors and affiliates. So my hope is to have fields in Mautic such as total spent, total earned, points... So if this module already existed that would become pretty trivial. I also wanted a simple form to collect emails from anonymous users.
 
-## Setting up Mautic for use with this module
+## Setup
+### Dependencies
+1) [Composer Manager](https://www.drupal.org/project/composer_manager)
+2) [jQuery Update](https://www.drupal.org/project/jquery_update)
+3) [Rules](https://www.drupal.org/project/rules)
+4) [Email](https://www.drupal.org/project/email)
+
+
+### Setting up Mautic for use with this module
 1) In the settings menu visit "Configuration" and select the "Api settings" tab.
 2) Ensure either the "API enabled?" (if using Oauth2) or "Enable HTTP basic auth?" (if using BasicAuth) is enabled. Please note that at this time only BasicAuth works. I'd be extremely grateful for any help with it. It works to an extent but won't stay authenticated.
 3) If using BasicAuth, skip to 5. In the settings menu visit the "API credentials"
@@ -21,15 +31,23 @@ My use case is a Commerce site with affiliates. So my hope is to have fields in 
   - For "Redirect URI" enter https://example.com/admin/config/services/mautic-api. Replace "example.com" in that with your Drupal website address.
 5) Flush the Mautic cache. In the terminal go to the root of your Mautic install and run: rm -rf app/cache/*
 
-## Install this Drupal module
+### Install this Drupal module
 1) Ensure the above dependencies are met.
-2) Enable the module using Drush. 
+2) Enable the Mautic API module. 
 3) In the terminal go to sites/default/files/composer and run: composer install
 4) On your Drupal website visit admin/config/services/mautic-api and enter your Mautic information.
 5) Click save.
 6) If using Oauth2, you will be asked to authorise your website. 
 7) Click Sync Mautic fields. This will replicate supported fields on the new Mautic API Contact entity type
-That's is it at the moment. 
+
+### Using the Signup block
+This block contains a form with a email field. When submitted the value will be posted to your Mautic form using PHP's Curl. So you need to have the curl extension enabled for this to work. The motivation was to allow us to collect email addresses from anonymous users. I wanted the value posted to a form so as to leverage all of Mautic's form functionality ie statistics, sending emails with links to contact preferences... Lastly I wanted to do so using a Drupal form because I wanted to leverage [Google Recaptcha](https://www.drupal.org/project/recaptcha) for spam prevention. 
+
+Steps to follow:
+1) Create a form in Mautic.
+2) Add one field called called: email_address
+3) Visit admin/config/services/mautic-api and enter the new Mautic form id. Here you can also add content to display above and below the form in the block. You can also add a Success Message.
+4) Visit admin/structure/block and place the block where you want.
 
 ## What's Next?
 
