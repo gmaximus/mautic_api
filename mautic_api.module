@@ -412,3 +412,149 @@ function mautic_api_get_contact_by_id($mautic_contact_id) {
   $contact = mautic_api_get_contact_by_id_call($mautic_contact_id);
   return $contact;
 }
+
+/**
+ * Create a simple sign up form with just a email address
+ * 
+ * We will use this to capture email address from anonymous users 
+ */
+
+function mautic_api_signup_form($form, &$form_state) {
+  
+ $form['email_address'] = array(
+    '#type' => 'textfield', //you can find a list of available types in the form api
+    '#title' => '   ',
+    '#size' => 10,
+    '#maxlength' => 100,
+    '#required' => TRUE, //make this field required 
+    '#attributes' => array(
+        'placeholder' => t('Enter your email')
+    ),
+  );
+  $form['submit_button'] = array(
+    '#type' => 'submit',
+    '#value' => t('Get updates and offers'),
+  );
+  
+  return $form;
+}
+
+function mautic_api_signup_form_validate($form, &$form_state) {
+    // form validate
+    if (!valid_email_address($form_state['values']['email_address'])) {
+      form_set_error('mail', t('You must enter a valid e-mail address.'));
+    }
+}
+
+function mautic_api_signup_form_submit($form, &$form_state) {
+    $data = array();
+    $data['email_address'] = $form_state['values']['email_address'];
+    $mautic_form_id = variable_get('mautic_api_signup_form_id', '');
+    $post_to_mautic_response = push_form_results_to_mautic($data, $mautic_form_id);
+    
+    $success_message = variable_get('mautic_api_signup_success', '');
+    drupal_set_message(t($success_message));
+}
+
+/**
+ * This is the method that will post the form info to Mautic.
+ * 
+ * See: https://medium.com/@jan_linhart/the-simplest-way-how-to-submit-a-form-data-to-mautic-1454d3afd005
+ */
+
+function push_form_results_to_mautic($data, $mautic_form_id, $ip = null) {
+    // Get IP from $_SERVER
+    if (!$ip) {
+        $ipHolders = array(
+            'HTTP_CLIENT_IP',
+            'HTTP_X_FORWARDED_FOR',
+            'HTTP_X_FORWARDED',
+            'HTTP_X_CLUSTER_CLIENT_IP',
+            'HTTP_FORWARDED_FOR',
+            'HTTP_FORWARDED',
+            'REMOTE_ADDR'
+        );
+
+        foreach ($ipHolders as $key) {
+            if (!empty($_SERVER[$key])) {
+                $ip = $_SERVER[$key];
+
+                if (strpos($ip, ',') !== false) {
+                    // Multiple IPs are present so use the last IP which should be the most reliable IP that last connected to the proxy
+                    $ips = explode(',', $ip);
+                    array_walk($ips, create_function('&$val', '$val = trim($val);'));
+
+                    $ip = end($ips);
+                }
+
+                $ip = trim($ip);
+                break;
+            }
+        }
+    }
+    
+    $data['formId'] = $mautic_form_id;
+
+    // return has to be part of the form data array
+    if (!isset($data['return'])) {
+        $data['return'] = url(current_path(), array('absolute' => TRUE));
+    }
+
+    $data = array('mauticform' => $data);
+
+    $mautic_url = variable_get('mautic_api_base_url', '');
+    $form_url = $mautic_url . '/form/submit?formId=' . $mautic_form_id;
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $form_url);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array("X-Forwarded-For: $ip"));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    $response = curl_exec($ch);
+
+    curl_close($ch);
+
+    return $response;     
+}
+
+/**
+ * Implements hook_block_info().
+ * 
+ * We will render the sign up form in a block
+ */
+function mautic_api_block_info() {
+  $blocks['mautic_api_signup'] = array(
+    'info' => t('Mautic Signup Form'),
+    'cache' => DRUPAL_NO_CACHE,
+  );
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function mautic_api_block_view($delta = '') {
+    
+    $block = array();
+
+    switch ($delta) {
+      case 'mautic_api_signup':
+        $above_form_value = variable_get('mautic_api_above_form', array('value' => '', 'format' => NULL));
+        $signup_form = drupal_get_form('mautic_api_signup_form');
+        $form = drupal_render($signup_form);
+        $below_form_value = variable_get('mautic_api_below_form', array('value' => '', 'format' => NULL));
+        
+        $block_content = "<div class='mautic-api-signup-content col-xs-12 col-sm-10 col-sm-offset-1 col-md-8 col-md-offset-2'>";
+        $block_content .= $above_form_value['value'];
+        $block_content .= $form;
+        $block_content .= $below_form_value['value'];
+        $block_content .= "</div>";
+        
+        $block['subject'] = t("Get updates and offers");
+        $block['content'] = $block_content;
+        break;
+    }
+    return $block;
+}

@@ -28,6 +28,53 @@ function mautic_api_settings_form() {
     '#required' => TRUE,
   );
   
+  $form['mautic_api_signup_block_fieldset'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Signup Block Info.'),
+    '#collapsible' => TRUE, 
+    '#collapsed' => TRUE,
+  );
+  
+  $form['mautic_api_signup_block_fieldset']['mautic_api_signup_form_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Mautic Form ID'),
+    '#default_value' => variable_get('mautic_api_signup_form_id', ''),
+    '#size' => 70,
+    '#description' => t("Enter the Mautic Form ID for the signup block. The form should have one field for a email. This should have the machine name (Field HTML name in Mautic): email_address"),
+    '#required' => FALSE,
+  );
+  
+  $above_form_value = variable_get('mautic_api_above_form', array('value' => '', 'format' => NULL));
+  $form['mautic_api_signup_block_fieldset']['mautic_api_above_form'] = array(
+    '#type' => 'text_format',
+    '#title' => t('Above form'),
+    '#default_value' => $above_form_value['value'],
+    '#format' => $above_form_value['format'],
+    '#size' => 70,
+    '#description' => t("This will be displayed above the form in the block."),
+    '#required' => FALSE,
+  );
+  
+  $below_form_value = variable_get('mautic_api_below_form', array('value' => '', 'format' => NULL));
+  $form['mautic_api_signup_block_fieldset']['mautic_api_below_form'] = array(
+    '#type' => 'text_format',
+    '#title' => t('Below form'),
+    '#default_value' => $below_form_value['value'],
+    '#format' => $below_form_value['format'],
+    '#size' => 70,
+    '#description' => t("This will be displayed blow the form in the block."),
+    '#required' => FALSE,
+  );
+  
+  $form['mautic_api_signup_block_fieldset']['mautic_api_signup_success'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Success message'),
+    '#default_value' => variable_get('mautic_api_signup_success', ''),
+    '#size' => 70,
+    '#description' => t("This will be displayed upon a successful submission."),
+    '#required' => FALSE,
+  );
+  
   $form['mautic_api_auth_type'] = array(
     '#type' => 'radios',
     '#options' => array(
